@@ -1,0 +1,127 @@
+#!/bin/sh
+
+# Deps:
+#   - binwalk
+#   - sed
+#   - dd
+#   - jq
+
+# Description:
+#   rpk files are often used in conjuction with imx500 python demo scripts.
+#   When used in this way, it is important to select the correct script for the
+#   task (i.e. classification, segmentation, etc.). Certain networks also
+#   require other paramaters to be set (such as fps) to achieve optimal
+#   performance.
+#
+#   This script takes the required invocation as arguments, i.e:
+#     augment_rpk \
+#       python \
+#         imx500_object_detection_demo.py \
+#         --model /usr/share/imx500-models/imx500_network_ssd_mobilenetv2_fpnlite_320x320_pp.rpk \
+#         --fps 26
+#
+#   If the rpk (imx500_network_ssd_mobilenetv2_fpnlite_pp.rpk) is found in the
+#   current working directory, both the interpreter
+#   (imx500_object_detection_demo.py) and the command line options (["--fps",
+#   "26"]) will be stored in a JSON-formatted 'demo_script_invocation' file
+#   within the rpk's CPIO archive as follows:
+#     {
+#       "interpreter": "imx500_object_detection_demo.py",
+#       "options": [
+#         "--fps",
+#         "26"
+#       ]
+#     }
+
+# Limitations:
+#   Can only currently be used to augment an original rpk (due to --append
+#   usage in 'cpio').
+#
+#   Not currently deterministic
+
+set -e
+
+if [ "$1" != "python" ]
+then
+  >&2 echo "ERROR: 1st argument was not 'python'"
+  return 1
+fi
+shift
+
+INTERPRETER="$1"
+if [ -z "$INTERPRETER" ]
+then
+  >&2 echo "ERROR: Interpreter was not set"
+  return 1
+fi
+shift
+
+if [ "$1" != "--model" ]
+then
+  >&2 echo "ERROR: '--model' was expected"
+  return 1
+fi
+shift
+
+MODEL="$(basename $1)"
+if [ ! -f "$MODEL" ]
+then
+  >&2 echo "ERROR: Could not find model file to update"
+  return 1
+fi
+shift
+
+jq -n \
+  --arg interpreter "$INTERPRETER" \
+  --args \
+  '{interpreter: $interpreter, options: $ARGS.positional}' \
+  -- \
+  $@ > demo_script_invocation
+touch -t 314103141031.41 demo_script_invocation
+
+# Deps: binwalk / sed
+calc_cpio_offset() {
+  binwalk "$1" | \
+    sed \
+      --quiet \
+      --regexp-extended \
+        '/ASCII cpio archive/{s/^([[:digit:]]+).*/\1/; p; q}'
+}
+
+# Calculate offset of CPIO within .rpk file using binwalk
+CPIO_OFFSET="$(calc_cpio_offset "$MODEL")"
+if [ -z "$CPIO_OFFSET" ]
+then
+  >&2 echo "ERROR: Could not calculate CPIO offset"
+  return 1
+fi
+
+# Use dd to extract CPIO archive
+CPIO_ARCHIVE="$(mktemp)"
+2>/dev/null \
+  dd \
+    ibs=1 \
+    iseek="$CPIO_OFFSET" \
+    if="$MODEL" \
+    of="$CPIO_ARCHIVE"
+
+# Append default_fps file to CPIO archive
+echo 'demo_script_invocation' | \
+  cpio \
+    --file "$CPIO_ARCHIVE" \
+    --format=newc \
+    --create \
+    --append \
+      2> /dev/null
+
+# Use dd to overwrite CPIO archive in rpk file
+2>/dev/null \
+  dd \
+    conv=notrunc \
+    obs=1 \
+    oseek="$CPIO_OFFSET" \
+    of="$MODEL" \
+    if="$CPIO_ARCHIVE"
+
+rm demo_script_invocation
+rm "$CPIO_ARCHIVE"
