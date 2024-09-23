@@ -1,0 +1,59 @@
+#!/bin/python3
+
+# Illustrive example of an RPK-launcher.
+#
+# The 'interpreter' (e.g. imx500_object_detection_demo.py) and options (e.g.
+# --fps 26) are extracted from the RPK provided as a paramater to the script.
+#
+# The folowing process is then launched:
+#   python <interpreter> --model <RPK> <options>
+#
+# This does not work in it's current form as currently the 'interpreter'
+# is a non-executable python script that is not installed to the PATH.
+
+import json
+import os
+import struct
+import subprocess
+import sys
+
+from libarchive.read import fd_reader
+
+network_filename = sys.argv[1]
+demo_script_invocation = ""
+
+with open (network_filename, 'rb') as rpk_file:
+    print ("Opened file")
+
+    fw = memoryview(rpk_file.read())
+
+    cpio_offset = 0
+    while True:
+        # Parse header (+ current block size)
+        (magic, size) = struct.unpack('>4sI', fw[:8])
+        if not magic == b'9464':
+            break
+        fw = fw[size + 60:]
+        # Ensure footer is as expected
+        (magic,) = struct.unpack('4s', fw[:4])
+        if not magic == b'3695':
+            raise RuntimeError(f'No matching footer found in firmware file {network_filename}')
+        fw = fw[4:]
+        cpio_offset += size + 64
+
+    cpio_fd = os.open(network_filename, os.O_RDONLY)
+    os.lseek(cpio_fd, cpio_offset, os.SEEK_SET)
+
+    with fd_reader(cpio_fd) as archive:
+        for entry in archive:
+            if 'demo_script_invocation' == str(entry):
+                demo_script_invocation = b''.join(entry.get_blocks())
+
+    os.close(cpio_fd)
+
+if demo_script_invocation == "":
+    raise RuntimeError('Unable to find demo_script_invocation');
+
+dsi = json.loads(demo_script_invocation)
+
+subprocess.call(["python", dsi['interpreter']] + ["--model", network_filename] + dsi['options'])
