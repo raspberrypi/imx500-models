@@ -31,7 +31,6 @@ sudo apt install imx500-models
 | efficientdet_lite0_pp              | Object Detection      | 320x320    | imx500_object_detection_demo.py --model /usr/share/imx500-models/imx500_network_efficientdet_lite0_pp.rpk              |
 | nanodet_plus_416x416               | object detection      | 416x416    | imx500_object_detection_demo.py --model /usr/share/imx500-models/imx500_network_nanodet_plus_416x416.rpk               |
 | nanodet_plus_416x416_pp            | Object Detection      | 416x416    | imx500_object_detection_demo.py --model /usr/share/imx500-models/imx500_network_nanodet_plus_416x416_pp.rpk            |
-| yolov8n_pp                         | object detection      | 640x640    | imx500_object_detection_demo.py --model /usr/share/imx500-models/imx500_network_yolov8n_pp.rpk                         |
 | ssd_mobilenetv2_fpnlite_320x320_pp | Object Detection      | 320x320    | imx500_object_detection_demo.py --model /usr/share/imx500-models/imx500_network_ssd_mobilenetv2_fpnlite_320x320_pp.rpk |
 | deeplabv3plus                      | Image Segmentation    | 320x320    | imx500_segmentation_demo.py  --model /usr/share/imx500-models/imx500_network_deeplabv3plus.rpk                         |
 | higherhrnet_coco                   | Pose Estimation       | 228x640    | imx500_pose_estimation_higherhrnet_demo.py --model /usr/share/imx500-models/imx500_network_higherhrnet_coco.rpk        |
