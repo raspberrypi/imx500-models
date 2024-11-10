@@ -1,11 +1,5 @@
 # Raspberry Pi AI Camera (IMX500) Neural Network Models
 
-Introducing the official Raspberry Pi AI Camera computer vision reference models 🚀 enabling real‑time vision AI applications at the edge!
-
-The imx500-models repository is a [**collection of reference deep learning models**](#reference-deep-learning-models) that are optimized 🪄 to run on the Raspberry Pi AI-Camera.
-
-For each model you'll find an example code for executing and visualizing directly on a Raspberry Pi AI Camera, using one execution command.
-
 ## Running Example Applications
 The below examples are templates to help implement specific deep learning inference use-cases. These demo applications will help you get started with AI on Raspberry Pi, showcasing how to preprocess and postrpocess data for model inference and organize processing pipelines.
 
