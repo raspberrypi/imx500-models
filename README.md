@@ -1,8 +1,6 @@
 # Raspberry Pi AI Camera (IMX500) Neural Network Models
 
 ## Running Example Applications
-The below examples are templates to help implement specific deep learning inference use-cases. These demo applications will help you get started with AI on Raspberry Pi, showcasing how to preprocess and postrpocess data for model inference and organize processing pipelines.
-
 1. First, all reference deep learning models should be installed on Raspberry Pi OS with:
 
 ```
@@ -27,8 +25,6 @@ For each example under the [**reference deep learning models**](#reference-deep-
 
 
 ## Reference Deep Learning Models
-> [!TIP]
-> The models below were trained and optimized for Raspberry Pi AI Camera. These can be useful both for quick onboarding as well as for quick deployment if you are interested in the categories that they were trained on.
 
 ### Classification
 - **Task:** Categorize input data into predefined classes and provide a confidence score.
